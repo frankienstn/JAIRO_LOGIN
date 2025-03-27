@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Jairosoft Timesheet</string>
+    <string name="startupscreenanimation">StartUpScreenAnimation</string>
+    <string name="bluejairo">blueJairo</string>
+    <string name="origjairo">origJairo</string>
+    <string name="title_activity_main2">MainActivity2</string>
+</resources>
