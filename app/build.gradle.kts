@@ -40,6 +40,9 @@ android {
 }
 
 dependencies {
+    implementation(libs.converterGson)
+    implementation(libs.gson)
+
 
     //API
     implementation(libs.retrofit)
@@ -69,6 +72,9 @@ dependencies {
     implementation(libs.play.services.maps)
     implementation(libs.androidx.navigation.common.ktx)
     implementation(libs.firebase.firestore.ktx)
+
+
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

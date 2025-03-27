@@ -29,10 +29,18 @@ playServicesLocation = "21.3.0"
 playServicesMaps = "19.1.0"
 navigationCommonKtxVersion = "2.8.9"
 retrofit = "2.11.0"
+gson = "2.10.1"
+converterGson = "2.11.0" # match Retrofit version if possible
 moshi = "1.14.0"
+supportAnnotationsVersion = "28.0.0"
+annotationVersion = "1.9.1"
+supportV4Version = "28.0.0"
+legacySupportV4Version = "1.0.0"
 
 [libraries]
 firebase-firestore-ktx = { module = "com.google.firebase:firebase-firestore-ktx", version.ref = "firebaseFirestore" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+converterGson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 converterMoshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "converterMoshiVersion" }
@@ -72,6 +80,8 @@ maps-utils-ktx = { module = "com.google.maps.android:maps-utils-ktx", version.re
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 play-services-maps = { module = "com.google.android.gms:play-services-maps", version.ref = "playServicesMaps" }
 androidx-navigation-common-ktx = { group = "androidx.navigation", name = "navigation-common-ktx", version.ref = "navigationCommonKtxVersion" }
+
+androidx-annotation = { group = "androidx.annotation", name = "annotation", version.ref = "annotationVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

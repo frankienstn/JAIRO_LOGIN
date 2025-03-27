@@ -1,6 +1,7 @@
 package com.example.jairosofttimesheet.data.remote
 
 import com.squareup.moshi.Moshi
+import com.google.gson.annotations.SerializedName
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
@@ -26,8 +27,28 @@ val retrofit = Retrofit.Builder()
     .baseUrl(BASE_URL)
     .build()
 
+data class LogsResponse(
+    val status: String,
+    val response: LogList
+)
+
+data class LogList(
+    @SerializedName("Logs") val logs: List<LogEntry>
+)
+
+data class LogEntry(
+    @SerializedName("User_id") val userId: String,
+    @SerializedName("Date") val date: String,
+    @SerializedName("time-in") val timeIn: Long,
+    @SerializedName("time-out") val timeOut: Long
+)
+
+
 // API Interface
 interface ApiService {
+    @GET("logs")
+    suspend fun getAttendanceLogs(): LogsResponse
+
 
     @POST("login")
     fun loginUser(

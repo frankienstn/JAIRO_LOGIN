@@ -4,11 +4,33 @@ import com.example.jairosofttimesheet.data.model.LoginRequest
 import com.example.jairosofttimesheet.data.model.LoginResponse
 import com.example.jairosofttimesheet.data.model.LoginUser
 import com.example.jairosofttimesheet.data.remote.ApiService
+import com.example.jairosofttimesheet.data.model.Attendance
+
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.text.SimpleDateFormat
+import java.util.*
 
 class Repository(private val apiService: ApiService) {
+
+    suspend fun getAttendance(): List<Attendance> {
+        val response = apiService.getAttendanceLogs()
+        return response.response.logs.map {
+            Attendance(
+                location = "Davao City", // You can adjust this dynamically if needed
+                date = "03/27/2025", // or whatever string you need
+                timeIn = it.timeIn.toTimeString(),
+                timeOut = it.timeOut.toTimeString()
+            )
+        }
+    }
+
+    private fun Long.toDateString(): String =
+        SimpleDateFormat("MM/dd/yyyy", Locale.getDefault()).format(Date(this * 1000))
+
+    private fun Long.toTimeString(): String =
+        SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date(this * 1000))
 
     fun loginUser(
         loginRequest: LoginRequest,

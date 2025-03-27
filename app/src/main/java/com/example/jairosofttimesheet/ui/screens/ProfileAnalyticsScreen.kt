@@ -46,9 +46,7 @@ import java.util.Date
 import java.util.Locale
 import android.os.Looper
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -59,7 +57,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import com.google.accompanist.permissions.*
 import com.google.android.gms.location.LocationCallback
@@ -72,16 +69,19 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.NavHostController
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.jairosofttimesheet.viewmodel.AttendanceViewModel
 import java.io.IOException
-import java.util.concurrent.TimeUnit
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.lifecycle.SavedStateHandle
-import com.example.jairosofttimesheet.ui.theme.gradientAttendance
+import com.example.jairosofttimesheet.data.model.LoginResponse
+import com.example.jairosofttimesheet.data.remote.ApiService
+import com.example.jairosofttimesheet.data.remote.LogsResponse
+import com.example.jairosofttimesheet.data.repository.Repository
+import com.example.jairosofttimesheet.data.model.*
+import com.example.jairosofttimesheet.data.remote.LogEntry
+import com.example.jairosofttimesheet.data.remote.LogList
+import com.example.jairosofttimesheet.viewmodel.*
 import com.example.jairosofttimesheet.ui.theme.gradientDate
 import com.example.jairosofttimesheet.ui.theme.gradientOnGoing
 import com.example.jairosofttimesheet.ui.theme.gradientTrackedHours
@@ -825,18 +825,20 @@ fun ProfileAnalyticsScreenPreview() {
     JairosoftTimesheetTheme {
         val navController = rememberNavController()
 
-        // Provide fake ViewModel data instead of real ViewModels
-        val fakeAttendanceViewModel = remember {
-            object : AttendanceViewModel(SavedStateHandle()) {
-                override val isClockedIn = MutableStateFlow(false) // Fake data
-            }
+        val fakeAttendanceViewModel = object : AttendanceViewModel(
+            repository = null!! // force-cast only for preview; not used
+        ) {
+            override val attendanceList = MutableStateFlow(
+                listOf(
+                    Attendance("HQ", "03/27/2025", "09:00 AM", "05:00 PM")
+                )
+            )
+            override val isClockedIn = MutableStateFlow(true)
         }
 
-        val fakeProfileViewModel = remember {
-            object : ProfileViewModel() {
-                override val trackedHours = MutableStateFlow(mapOf("Monday" to 4f)) // Fake data
-                override val runningTime = MutableStateFlow(0L) // Fake running time
-            }
+        val fakeProfileViewModel = object : ProfileViewModel() {
+            override val trackedHours = MutableStateFlow(mapOf("Monday" to 4f))
+            override val runningTime = MutableStateFlow(0L)
         }
 
         ProfileAnalyticsScreen(
@@ -846,6 +848,8 @@ fun ProfileAnalyticsScreenPreview() {
         )
     }
 }
+
+
 
 
 
