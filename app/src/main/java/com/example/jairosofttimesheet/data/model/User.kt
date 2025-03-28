@@ -28,6 +28,20 @@ data class LoginUser(
     @Json(name = "name") val name: String
 )
 
+@JsonClass(generateAdapter = true)
+data class LogsResponse(
+    @Json(name = "status") val status: String,
+    @Json(name = "response") val response: List<LogEntry>  // ✅ This is now a List
+)
+
+@JsonClass(generateAdapter = true)
+data class LogEntry(
+    @Json(name = "User_id") val userId: String?,
+    @Json(name = "Date") val date: String?,
+    @Json(name = "time-in") val timeIn: String?,
+    @Json(name = "time-out") val timeOut: String?
+)
+
 data class Attendance(
     val location: String,
     val date: String,

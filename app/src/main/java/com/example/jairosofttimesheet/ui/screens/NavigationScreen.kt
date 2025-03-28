@@ -28,17 +28,27 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.jairosofttimesheet.R
+import com.example.jairosofttimesheet.viewmodel.AttendanceViewModel
+import com.example.jairosofttimesheet.viewmodel.ProfileViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
 fun NavigationScreen(
     navController: NavController,
+    attendanceViewModel: AttendanceViewModel,
+    profileViewModel: ProfileViewModel,
     content: @Composable () -> Unit
 ) {
     Scaffold(
         topBar = { TopBar(navController) },
-        bottomBar = { BottomNavigationBar(navController) }
+        bottomBar = {
+            BottomNavigationBar(
+                navController = navController,
+                attendanceViewModel = attendanceViewModel,
+                profileViewModel = profileViewModel
+            )
+        }
     ) { padding ->
         Box(modifier = Modifier.padding(padding)) {
             content()
@@ -84,7 +94,11 @@ fun TopBar(navController: NavController) {
 }
 
 @Composable
-fun BottomNavigationBar(navController: NavController) {
+fun BottomNavigationBar(
+    navController: NavController,
+    attendanceViewModel: AttendanceViewModel,
+    profileViewModel: ProfileViewModel
+) {
     val coroutineScope = rememberCoroutineScope()
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 

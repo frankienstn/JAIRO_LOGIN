@@ -2,13 +2,20 @@ package com.example.jairosofttimesheet.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.jairosofttimesheet.data.model.Attendance
+import com.example.jairosofttimesheet.data.repository.Repository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import com.example.jairosofttimesheet.data.model.Attendance
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
-open class AttendanceViewModel(private val savedStateHandle: SavedStateHandle) : ViewModel() {
+open class AttendanceViewModel(
+    private val repository: Repository,
+    private val savedStateHandle: SavedStateHandle
+) : ViewModel() {
 
     private val _attendanceList = MutableStateFlow<List<Attendance>>(getSavedAttendanceData())
     val attendanceList: StateFlow<List<Attendance>> = _attendanceList
@@ -37,20 +44,32 @@ open class AttendanceViewModel(private val savedStateHandle: SavedStateHandle) :
         }
     }
 
-    // Toggle clock in/out
+    // Fetch from API
+    fun fetchAttendanceFromApi() {
+        viewModelScope.launch {
+            try {
+                val logs = repository.getAttendance()
+                println("✅ Attendance logs fetched: ${logs.size}")
+                logs.forEach { println(it) }
+
+                _attendanceList.value = logs
+            } catch (e: Exception) {
+                println("❌ Error fetching attendance: ${e.message}")
+                e.printStackTrace()
+            }
+        }
+    }
+
+
     fun toggleClockIn() {
         _isClockedIn.value = !_isClockedIn.value
     }
 
-    // Save attendance data
     private fun saveAttendanceData(data: List<Attendance>) {
         savedStateHandle["attendanceData"] = data
     }
 
-    // Retrieve saved attendance data
     private fun getSavedAttendanceData(): List<Attendance> {
         return savedStateHandle["attendanceData"] ?: emptyList()
     }
 }
-
-

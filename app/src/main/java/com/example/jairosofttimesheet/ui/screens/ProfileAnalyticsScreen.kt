@@ -3,65 +3,91 @@ package com.example.jairosofttimesheet.ui.screens
 import android.Manifest
 import android.content.pm.PackageManager
 import android.location.Geocoder
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.navigation.compose.rememberNavController
-import com.example.jairosofttimesheet.R
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import androidx.compose.ui.text.style.TextAlign
-import com.example.jairosofttimesheet.ui.theme.JairosoftTimesheetTheme
-import com.example.jairosofttimesheet.ui.theme.gradientDBlue
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CardDefaults
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.LocalContext
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import android.os.Looper
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
-import com.google.accompanist.permissions.*
+import androidx.lifecycle.SavedStateHandle
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
+import com.example.jairosofttimesheet.R
+import com.example.jairosofttimesheet.data.model.LogEntry
+import com.example.jairosofttimesheet.data.model.LoginRequest
+import com.example.jairosofttimesheet.data.model.LoginResponse
+import com.example.jairosofttimesheet.data.model.LoginUser
+import com.example.jairosofttimesheet.data.model.LogsResponse
+import com.example.jairosofttimesheet.data.remote.ApiService
+import com.example.jairosofttimesheet.data.repository.Repository
+import com.example.jairosofttimesheet.ui.theme.JairosoftTimesheetTheme
+import com.example.jairosofttimesheet.ui.theme.gradientDBlue
+import com.example.jairosofttimesheet.ui.theme.gradientDate
+import com.example.jairosofttimesheet.ui.theme.gradientOnGoing
+import com.example.jairosofttimesheet.ui.theme.gradientTrackedHours
+import com.example.jairosofttimesheet.viewmodel.AttendanceViewModel
+import com.example.jairosofttimesheet.viewmodel.ProfileViewModel
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.PermissionStatus
+import com.google.accompanist.permissions.rememberPermissionState
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
@@ -69,29 +95,40 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.*
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
-import androidx.navigation.NavHostController
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.jairosofttimesheet.viewmodel.AttendanceViewModel
-import java.io.IOException
-import java.util.concurrent.TimeUnit
-import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.lifecycle.SavedStateHandle
-import com.example.jairosofttimesheet.ui.theme.gradientAttendance
-import com.example.jairosofttimesheet.ui.theme.gradientDate
-import com.example.jairosofttimesheet.ui.theme.gradientOnGoing
-import com.example.jairosofttimesheet.ui.theme.gradientTrackedHours
-import com.example.jairosofttimesheet.viewmodel.ProfileViewModel
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberCameraPositionState
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+import retrofit2.Call
+import java.io.IOException
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
+
+fun getCurrentDay(): String {
+    val calendar = Calendar.getInstance()
+    return when (calendar.get(Calendar.DAY_OF_WEEK)) {
+        Calendar.MONDAY -> "M"
+        Calendar.TUESDAY -> "T"
+        Calendar.WEDNESDAY -> "W"
+        Calendar.THURSDAY -> "Th"
+        Calendar.FRIDAY -> "F"
+        else -> ""
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
-fun ProfileAnalyticsScreen(navController: NavController, attendanceViewModel: AttendanceViewModel = viewModel(), profileViewModel: ProfileViewModel = viewModel()) {
+fun ProfileAnalyticsScreen(
+    navController: NavController,
+    attendanceViewModel: AttendanceViewModel,
+    profileViewModel: ProfileViewModel
+)
+ {
     val isClockedIn by attendanceViewModel.isClockedIn.collectAsState()
 
     var timeCounter by remember { mutableLongStateOf(0L) }
@@ -118,7 +155,13 @@ fun ProfileAnalyticsScreen(navController: NavController, attendanceViewModel: At
     var locationText by remember { mutableStateOf("Fetching location...") }
 
     val permissionState = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
+    val attendanceList by attendanceViewModel.attendanceList.collectAsState()
 
+    LaunchedEffect(Unit) {
+        attendanceViewModel.fetchAttendanceFromApi()
+    }
+    // Updated: AttendanceCard shows latest 5 logs only
+    val recentFive = attendanceList.takeLast(5).reversed()
     // Request permissions if not granted
     LaunchedEffect(Unit) {
         if (permissionState.status != PermissionStatus.Granted) {
@@ -134,6 +177,7 @@ fun ProfileAnalyticsScreen(navController: NavController, attendanceViewModel: At
         interval = 5000
     }
 
+
     val locationCallback = rememberUpdatedState(
         object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
@@ -141,11 +185,13 @@ fun ProfileAnalyticsScreen(navController: NavController, attendanceViewModel: At
                     userLocation = LatLng(location.latitude, location.longitude)
                     val geocoder = Geocoder(context, Locale.getDefault())
                     try {
-                        val addressList = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+                        val addressList =
+                            geocoder.getFromLocation(location.latitude, location.longitude, 1)
                         if (addressList.isNullOrEmpty()) {
                             locationText = "Unable to get location name"
                         } else {
-                            locationText = addressList[0].locality ?: addressList[0].subAdminArea ?: "Unknown Location"
+                            locationText = addressList[0].locality ?: addressList[0].subAdminArea
+                                    ?: "Unknown Location"
                         }
                     } catch (e: IOException) {
                         locationText = "Unable to get location name"
@@ -267,7 +313,7 @@ fun ProfileAnalyticsScreen(navController: NavController, attendanceViewModel: At
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                   val isClockedIn by profileViewModel.isClockedIn.collectAsState()
+                    val isClockedIn by profileViewModel.isClockedIn.collectAsState()
 
                     Button(
                         onClick = {
@@ -423,7 +469,11 @@ fun ProfileAnalyticsScreen(navController: NavController, attendanceViewModel: At
                 modifier = Modifier
                     .width(320.dp) // Reduced width
                     .height(50.dp)
-                    .graphicsLayer(alpha = alpha1.value, scaleX = scale1.value, scaleY = scale1.value)
+                    .graphicsLayer(
+                        alpha = alpha1.value,
+                        scaleX = scale1.value,
+                        scaleY = scale1.value
+                    )
                     .background(brush = gradientDate, shape = RoundedCornerShape(8.dp)),
                 colors = CardDefaults.cardColors(containerColor = Color.Transparent)
             ) {
@@ -452,7 +502,11 @@ fun ProfileAnalyticsScreen(navController: NavController, attendanceViewModel: At
             Card(
                 modifier = Modifier
                     .size(320.dp, 63.dp)
-                    .graphicsLayer(alpha = alpha2.value, scaleX = scale2.value, scaleY = scale2.value)
+                    .graphicsLayer(
+                        alpha = alpha2.value,
+                        scaleX = scale2.value,
+                        scaleY = scale2.value
+                    )
                     .background(brush = gradientOnGoing, shape = RoundedCornerShape(8.dp)),
                 colors = CardDefaults.cardColors(containerColor = Color.Transparent)
             ) {
@@ -487,7 +541,11 @@ fun ProfileAnalyticsScreen(navController: NavController, attendanceViewModel: At
                 modifier = Modifier
                     .size(320.dp, 350.dp)
                     .clickable { navController.navigate("TimesheetScreen") }
-                    .graphicsLayer(alpha = alpha3.value, scaleX = scale3.value, scaleY = scale3.value)
+                    .graphicsLayer(
+                        alpha = alpha3.value,
+                        scaleX = scale3.value,
+                        scaleY = scale3.value
+                    )
                     .background(brush = gradientTrackedHours, shape = RoundedCornerShape(8.dp)),
                 colors = CardDefaults.cardColors(containerColor = Color.Transparent)
             ) {
@@ -523,7 +581,12 @@ fun ProfileAnalyticsScreen(navController: NavController, attendanceViewModel: At
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
                             hours.forEach { hour ->
-                                Text(text = "$hour", fontFamily = afacad, fontSize = 11.sp, color = Color.Black)
+                                Text(
+                                    text = "$hour",
+                                    fontFamily = afacad,
+                                    fontSize = 11.sp,
+                                    color = Color.Black
+                                )
                             }
                         }
 
@@ -617,7 +680,11 @@ fun ProfileAnalyticsScreen(navController: NavController, attendanceViewModel: At
             Card(
                 modifier = Modifier
                     .size(320.dp, 337.dp)
-                    .graphicsLayer(alpha = alpha4.value, scaleX = scale4.value, scaleY = scale4.value),
+                    .graphicsLayer(
+                        alpha = alpha4.value,
+                        scaleX = scale4.value,
+                        scaleY = scale4.value
+                    ),
                 colors = CardDefaults.cardColors(containerColor = Color.Transparent),
                 elevation = CardDefaults.cardElevation(0.dp)
             ) {
@@ -632,15 +699,12 @@ fun ProfileAnalyticsScreen(navController: NavController, attendanceViewModel: At
                         Image(
                             painter = painterResource(id = R.drawable.calendar),
                             contentDescription = "Calendar Icon",
-                            colorFilter = ColorFilter.tint(Color(0xFFFFFFFF)),
-                            modifier = Modifier
-                                .size(24.dp)
-                                .padding(start = 4.dp)
+                            colorFilter = ColorFilter.tint(Color.White),
+                            modifier = Modifier.size(24.dp).padding(start = 4.dp)
                         )
                     }
 
                     Column(modifier = Modifier.fillMaxSize().padding(top = 40.dp)) {
-                        var showDatePicker by remember { mutableStateOf(false) }
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -650,79 +714,39 @@ fun ProfileAnalyticsScreen(navController: NavController, attendanceViewModel: At
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "Location",
+                                "Location",
                                 fontFamily = poppins,
                                 fontSize = 11.sp,
                                 color = Color.White,
                                 modifier = Modifier.weight(1f)
                             )
-
-                            Row(
-                                modifier = Modifier
-                                    .clickable { showDatePicker = true }
-                                    .weight(1f),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "Date",
-                                    fontFamily = poppins,
-                                    fontSize = 11.sp,
-                                    color = Color.White
-                                )
-                                Icon(
-                                    imageVector = Icons.Default.ArrowDropDown,
-                                    contentDescription = "Dropdown Arrow",
-                                    tint = Color.White,
-                                    modifier = Modifier.padding(start = 4.dp)
-                                )
-                            }
-
-                            if (showDatePicker) {
-                                DatePickerDialog(
-                                    onDismissRequest = { showDatePicker = false },
-                                    confirmButton = {
-                                        TextButton(onClick = { showDatePicker = false }) {
-                                            Text("OK")
-                                        }
-                                    },
-                                    dismissButton = {
-                                        TextButton(onClick = { showDatePicker = false }) {
-                                            Text("Cancel")
-                                        }
-                                    }
-                                ) {
-                                    DatePicker(state = rememberDatePickerState())
-                                }
-                            }
-
-                            Row(
-                                modifier = Modifier.weight(2f),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = "Time In",
-                                    fontFamily = poppins,
-                                    fontSize = 11.sp,
-                                    color = Color.White
-                                )
-                                Text(
-                                    text = "Time Out",
-                                    fontFamily = poppins,
-                                    fontSize = 11.sp,
-                                    color = Color.White,
-                                    modifier = Modifier.padding(end = 15.dp)
-                                )
-                            }
+                            Text(
+                                "Date",
+                                fontFamily = poppins,
+                                fontSize = 11.sp,
+                                color = Color.White,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Text(
+                                "Time In",
+                                fontFamily = poppins,
+                                fontSize = 11.sp,
+                                color = Color.White,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Text(
+                                "Time Out",
+                                fontFamily = poppins,
+                                fontSize = 11.sp,
+                                color = Color.White,
+                                modifier = Modifier.weight(1f)
+                            )
                         }
 
-                        val attendanceList by profileViewModel.attendanceList.collectAsState()
-
                         Column(
-                            modifier = Modifier
-                                .verticalScroll(rememberScrollState())
-                                .weight(1f)
+                            modifier = Modifier.verticalScroll(rememberScrollState()).weight(1f)
                         ) {
-                            attendanceList.forEach { (date, timeIn, timeOut) ->
+                            recentFive.forEach { log ->
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -735,50 +759,28 @@ fun ProfileAnalyticsScreen(navController: NavController, attendanceViewModel: At
                                         text = locationText.take(10) + if (locationText.length > 10) "..." else "",
                                         fontFamily = afacad,
                                         color = Color.White,
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .padding(end = 5.dp),
+                                        modifier = Modifier.weight(1f).padding(end = 5.dp),
                                         fontSize = 11.sp
                                     )
-
                                     Text(
-                                        text = date,
+                                        text = log.date ?: "--",
                                         fontFamily = afacad,
                                         color = Color.White,
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .padding(end = 5.dp),
+                                        modifier = Modifier.weight(1f).padding(end = 5.dp),
                                         fontSize = 11.sp
                                     )
-
                                     Text(
-                                        text = timeIn,
+                                        text = log.timeIn ?: "--",
                                         fontFamily = afacad,
                                         color = Color.White,
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .padding(end = 5.dp),
+                                        modifier = Modifier.weight(1f).padding(end = 5.dp),
                                         fontSize = 11.sp
                                     )
-
                                     Text(
-                                        text = if (timeOut == "--") {
-                                            " -- "
-                                        } else {
-                                            timeOut
-                                        },
+                                        text = log.timeOut ?: "--",
                                         fontFamily = afacad,
                                         color = Color.White,
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .padding(start = 5.dp, end = 6.dp)
-                                            .run {
-                                                if (timeOut == "--") {
-                                                    this.then(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp))
-                                                } else {
-                                                    this
-                                                }
-                                            },
+                                        modifier = Modifier.weight(1f).padding(end = 5.dp),
                                         fontSize = 11.sp
                                     )
                                 }
@@ -788,14 +790,14 @@ fun ProfileAnalyticsScreen(navController: NavController, attendanceViewModel: At
 
                     FloatingActionButton(
                         onClick = { navController.navigate("AttendanceScreen") },
-                        containerColor = Color(0xFFFFFFFFF),
+                        containerColor = Color.White,
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
                             .padding(16.dp)
                             .size(320.dp, 41.dp)
                     ) {
                         Text(
-                            text = "Show Attendance",
+                            "Show Attendance",
                             color = Color.Black,
                             fontFamily = afacad,
                             fontSize = 13.sp
@@ -804,19 +806,14 @@ fun ProfileAnalyticsScreen(navController: NavController, attendanceViewModel: At
                 }
             }
         }
+
+
     }
 }
 
-fun getCurrentDay(): String {
-    val calendar = Calendar.getInstance()
-    return when (calendar.get(Calendar.DAY_OF_WEEK)) {
-        Calendar.MONDAY -> "M"
-        Calendar.TUESDAY -> "T"
-        Calendar.WEDNESDAY -> "W"
-        Calendar.THURSDAY -> "Th"
-        Calendar.FRIDAY -> "F"
-        else -> ""
-    }
+private fun Long.toDateString(): String {
+    val sdf = SimpleDateFormat("MM/dd/yyyy", Locale.getDefault())
+    return sdf.format(Date(this))
 }
 
 @Preview(showBackground = true)
@@ -825,27 +822,56 @@ fun ProfileAnalyticsScreenPreview() {
     JairosoftTimesheetTheme {
         val navController = rememberNavController()
 
-        // Provide fake ViewModel data instead of real ViewModels
-        val fakeAttendanceViewModel = remember {
-            object : AttendanceViewModel(SavedStateHandle()) {
-                override val isClockedIn = MutableStateFlow(false) // Fake data
-            }
+        val dummyAttendanceViewModel = object : AttendanceViewModel(
+            repository = Repository(object : ApiService {
+                override fun loginUser(credentials: LoginRequest): Call<LoginResponse> {
+                    TODO("Not needed in preview")
+                }
+
+                override fun getAllUsers(token: String): Call<List<LoginUser>> {
+                    TODO("Not needed in preview")
+                }
+
+                override suspend fun getAttendanceLogs(): LogsResponse {
+                    return LogsResponse(
+                        status = "success",
+                        response = listOf( // ✅ directly return list of LogEntry
+                            LogEntry("1", "03/28/2025", "1738824680000", "1738866880000"),
+                            LogEntry("2", "03/27/2025", "1738738080000", "1738775880000"),
+                            LogEntry("3", "03/26/2025", "1738651680000", null)
+                        )
+                    )
+                }
+            }),
+            savedStateHandle = SavedStateHandle()
+        ) {
+            override val isClockedIn = MutableStateFlow(false)
         }
 
-        val fakeProfileViewModel = remember {
-            object : ProfileViewModel() {
-                override val trackedHours = MutableStateFlow(mapOf("Monday" to 4f)) // Fake data
-                override val runningTime = MutableStateFlow(0L) // Fake running time
-            }
+        val dummyProfileViewModel = object : ProfileViewModel() {
+            override val trackedHours = MutableStateFlow(
+                mapOf("M" to 4f, "T" to 3f, "W" to 6f, "Th" to 2f, "F" to 5f)
+            )
+            override val runningTime = MutableStateFlow(3661L)
+            override val attendanceList = MutableStateFlow(
+                listOf(
+                    Triple("03/28/2025", "08:00 AM", "05:00 PM"),
+                    Triple("03/27/2025", "08:10 AM", "04:30 PM"),
+                    Triple("03/26/2025", "08:00 AM", "--")
+                )
+            )
         }
 
         ProfileAnalyticsScreen(
             navController = navController,
-            attendanceViewModel = fakeAttendanceViewModel,
-            profileViewModel = fakeProfileViewModel
+            attendanceViewModel = dummyAttendanceViewModel,
+            profileViewModel = dummyProfileViewModel
         )
     }
 }
+
+
+
 
 
 

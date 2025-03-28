@@ -21,7 +21,7 @@ open class ProfileViewModel : ViewModel() {
     open val runningTime: StateFlow<Long> = _runningTime
 
     private val _attendanceList = MutableStateFlow<List<Triple<String, String, String>>>(emptyList())
-    val attendanceList: StateFlow<List<Triple<String, String, String>>> = _attendanceList
+    open val attendanceList: StateFlow<List<Triple<String, String, String>>> = _attendanceList
 
     private var clockInTimes = mutableMapOf<String, Long>()
     private var job: Job? = null

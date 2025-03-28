@@ -5,39 +5,32 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.example.jairosofttimesheet.data.remote.ApiService
+import com.example.jairosofttimesheet.data.repository.Repository
 import com.example.jairosofttimesheet.ui.screens.AttendanceScreen
-import com.example.jairosofttimesheet.ui.screens.ForgotPasswordScreen
 import com.example.jairosofttimesheet.ui.screens.LoginScreen
 import com.example.jairosofttimesheet.ui.screens.NavigationScreen
 import com.example.jairosofttimesheet.ui.screens.ProfileAnalyticsScreen
 import com.example.jairosofttimesheet.ui.screens.StartUpScreen
 import com.example.jairosofttimesheet.ui.screens.TimesheetScreen
 import com.example.jairosofttimesheet.ui.theme.JairosoftTimesheetTheme
+import com.example.jairosofttimesheet.viewmodel.AttendanceViewModel
+import com.example.jairosofttimesheet.viewmodel.ProfileViewModel
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
-
+import retrofit2.Retrofit
+import retrofit2.converter.moshi.MoshiConverterFactory
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalAnimationApi::class)
@@ -48,185 +41,80 @@ class MainActivity : ComponentActivity() {
             JairosoftTimesheetTheme {
                 val navController = rememberAnimatedNavController()
 
-                //for lesser delay when first navigating through Login -> PA.. backStackEntry
-                val destination = navController.currentBackStackEntryAsState().value?.destination?.route
-                key(destination) {
-                    ProfileAnalyticsScreen(navController)
-                }
+                // Create Repository instance
+                val apiService = Retrofit.Builder()
+                    .baseUrl("https://timesheet-63231.bubbleapps.io/api/1.1/wf/") // TODO: Replace with your actual base URL
+                    .addConverterFactory(MoshiConverterFactory.create())
+                    .build()
+                    .create(ApiService::class.java)
 
-                Box(
-                    modifier = Modifier.fillMaxSize()
-                        .background(MaterialTheme.colorScheme.background)
-                ) {
+                val repository = Repository(apiService)
+
+                val attendanceViewModel: AttendanceViewModel = viewModel(
+                    factory = viewModelFactory {
+                        initializer {
+                            AttendanceViewModel(repository, SavedStateHandle())
+                        }
+                    }
+                )
+
+                val profileViewModel: ProfileViewModel = viewModel()
+
+                Box(modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)) {
                     AnimatedNavHost(
                         navController = navController,
                         startDestination = "StartUpScreen",
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        composable("StartUpScreen",
-                            exitTransition = {
-                                fadeOut(
-                                    animationSpec = tween(800) // 600ms fade-in duration
-                                )
-                            },
-                            )
-                        {
+                        composable("StartUpScreen") {
                             StartUpScreen(navController)
                         }
-                        composable(
-                            "LoginScreen",
-                            enterTransition = {
-                                fadeIn(
-                                    animationSpec = tween(800) // 600ms fade-in duration
-                                )
-                            },
-                            exitTransition = {
-                                when (targetState.destination.route) {
-                                    "NavigationScreen" -> slideOutVertically(
-                                    targetOffsetY = { -it },
-                                        animationSpec = tween(
-                                            durationMillis = 800,
-                                            easing = FastOutSlowInEasing
-                                        )
-                                    )
-                                    else -> slideOutHorizontally(
-                                        targetOffsetX = { -it },
-                                        animationSpec = tween(600)
-                                    )
-                                }
-                            },
-                            popEnterTransition = {
-                                slideInHorizontally(
-                                    initialOffsetX = { -it },
-                                    animationSpec = tween(600)
-                                )
-                            },
-                            popExitTransition = {
-                                slideOutHorizontally(
-                                    targetOffsetX = { it },
-                                    animationSpec = tween(600)
-                                )
-                            }
-                        ) {
+                        composable("LoginScreen") {
                             LoginScreen(navController)
                         }
-
-                        composable(
-                            "ForgotPasswordScreen",
-                            enterTransition = {
-                                slideInHorizontally(
-                                    initialOffsetX = { it },
-                                    animationSpec = tween(600)
-                                )
-                            },
-                            exitTransition = {
-                                slideOutHorizontally(
-                                    targetOffsetX = { it },
-                                    animationSpec = tween(400)
-                                )
-                            },
-                            popEnterTransition = {
-                                slideInHorizontally(
-                                    initialOffsetX = { it },
-                                    animationSpec = tween(600)
-                                )
-                            },
-                            popExitTransition = {
-                                slideOutHorizontally(
-                                    targetOffsetX = { it },
-                                    animationSpec = tween(600)
+                        composable("NavigationScreen") {
+                            NavigationScreen(
+                                navController = navController,
+                                attendanceViewModel = attendanceViewModel,
+                                profileViewModel = profileViewModel
+                            ) {
+                                ProfileAnalyticsScreen(
+                                    navController = navController,
+                                    attendanceViewModel = attendanceViewModel,
+                                    profileViewModel = profileViewModel
                                 )
                             }
-                        ) {
-                            ForgotPasswordScreen(navController)
                         }
-
-                        composable(
-                            "NavigationScreen",
-                            enterTransition = {
-                                if (initialState.destination.route == "LoginScreen") {
-                                    slideInVertically(
-                                        initialOffsetY = { it },
-                                        animationSpec = tween(600)
-                                    )
-                                } else EnterTransition.None
-                            },
-                            exitTransition = {
-                                if (targetState.destination.route == "LoginScreen") {
-                                    slideOutVertically(
-                                        targetOffsetY = { it },
-                                        animationSpec = tween(600)
-                                    )
-                                } else ExitTransition.None
-                            }
-                        ) {
-                            NavigationScreen(navController = navController) {
-                                ProfileAnalyticsScreen(navController)
+                        composable("ProfileAnalyticsScreen") {
+                            NavigationScreen(
+                                navController = navController,
+                                attendanceViewModel = attendanceViewModel,
+                                profileViewModel = profileViewModel
+                            ) {
+                                ProfileAnalyticsScreen(
+                                    navController = navController,
+                                    attendanceViewModel = attendanceViewModel,
+                                    profileViewModel = profileViewModel
+                                )
                             }
                         }
-
-                        composable("ProfileAnalyticsScreen",
-                            enterTransition = {
-                                when (initialState.destination.route) {
-                                    "AttendanceScreen" -> slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(600)) // From Left
-                                    "TimesheetScreen" -> slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(600)) // From Right
-                                    "LoginScreen" -> slideInVertically(initialOffsetY = { it }, animationSpec = tween(600)) // From Bottom
-                                    else -> EnterTransition.None
-                                }
-                            },
-                            exitTransition = {
-                                when (targetState.destination.route) {
-                                    "AttendanceScreen" -> slideOutHorizontally(targetOffsetX = { -it }, animationSpec = tween(600)) // To Left
-                                    "TimesheetScreen" -> slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(600))  // To Right
-                                    "LoginScreen" -> slideOutVertically(targetOffsetY = { it }, animationSpec = tween(600)) // To Bottom
-                                    else -> ExitTransition.None
-                                }
-                            }
-                        ) {
-                            NavigationScreen(navController = navController) {
-                                ProfileAnalyticsScreen(navController)
+                        composable("AttendanceScreen") {
+                            NavigationScreen(
+                                navController = navController,
+                                attendanceViewModel = attendanceViewModel,
+                                profileViewModel = profileViewModel
+                            ) {
+                                AttendanceScreen(attendanceViewModel)
                             }
                         }
-
-                        composable("AttendanceScreen",
-                            enterTransition = {
-                                when (initialState.destination.route) {
-                                    "ProfileAnalyticsScreen" -> slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(600))
-                                    "TimesheetScreen" -> slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(600))
-                                    else -> EnterTransition.None
-                                }
-                            },
-                            exitTransition = {
-                                when (targetState.destination.route) {
-                                    "ProfileAnalyticsScreen" -> slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(600))
-                                    "TimesheetScreen" -> slideOutHorizontally(targetOffsetX = { -it }, animationSpec = tween(600))
-                                    else -> ExitTransition.None
-                                }
-                            }
-                        ) {
-                            NavigationScreen(navController = navController) {
-                                AttendanceScreen()
-                            }
-                        }
-
-
-                        composable("TimesheetScreen",
-                            enterTransition = {
-                                when (initialState.destination.route) {
-                                    "ProfileAnalyticsScreen" -> slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(600))
-                                    "AttendanceScreen" -> slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(600))
-                                    else -> EnterTransition.None
-                                }
-                            },
-                            exitTransition = {
-                                when (targetState.destination.route) {
-                                    "ProfileAnalyticsScreen" -> slideOutHorizontally(targetOffsetX = { -it }, animationSpec = tween(600))
-                                    "AttendanceScreen" -> slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(600))
-                                    else -> ExitTransition.None
-                                }
-                            }
-                        ) {
-                            NavigationScreen(navController = navController) {
+                        composable("TimesheetScreen") {
+                            NavigationScreen(
+                                navController = navController,
+                                attendanceViewModel = attendanceViewModel,
+                                profileViewModel = profileViewModel
+                            ) {
                                 TimesheetScreen(navController)
                             }
                         }
@@ -234,14 +122,5 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun StartUpScreenPreview() {
-    JairosoftTimesheetTheme {
-        val navController = rememberNavController()
-        StartUpScreen(navController)
     }
 }

@@ -3,6 +3,7 @@ package com.example.jairosofttimesheet.data.remote
 import com.example.jairosofttimesheet.data.model.LoginRequest
 import com.example.jairosofttimesheet.data.model.LoginResponse
 import com.example.jairosofttimesheet.data.model.LoginUser
+import com.example.jairosofttimesheet.data.model.LogsResponse
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import retrofit2.Call
@@ -38,6 +39,10 @@ interface ApiService {
     fun getAllUsers(
         @Header("Authorization") token: String
     ): Call<List<LoginUser>>
+
+    @GET("logs")
+    suspend fun getAttendanceLogs(): LogsResponse
+
 }
 
 
