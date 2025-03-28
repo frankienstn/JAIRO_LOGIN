@@ -1,5 +1,7 @@
 package com.example.jairosofttimesheet.ui.screens
 
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -15,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -26,25 +29,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.jairosofttimesheet.R
-import android.widget.Toast
-import androidx.compose.material3.IconButton
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.VisualTransformation
-import com.example.jairosofttimesheet.data.remote.ApiService
-import com.example.jairosofttimesheet.data.remote.retrofit
 import com.example.jairosofttimesheet.data.model.LoginRequest
 import com.example.jairosofttimesheet.data.model.LoginResponse
+import com.example.jairosofttimesheet.data.remote.ApiService
+import com.example.jairosofttimesheet.data.remote.retrofit
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -184,8 +185,10 @@ fun LoginScreen(navController: NavController) {
                             }
                         }
                         override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
-                            Toast.makeText(context, "Network error", Toast.LENGTH_SHORT).show()
+                            Log.e("LOGIN_DEBUG", "Network failure: ${t.localizedMessage}", t)
+                            Toast.makeText(context, "Network error: ${t.localizedMessage}", Toast.LENGTH_LONG).show()
                         }
+
                     })
                 },
             modifier = Modifier
