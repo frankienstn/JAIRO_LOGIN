@@ -13,6 +13,10 @@ import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
+
+@JsonClass(generateAdapter = true)
 
 private const val BASE_URL = "https://timesheet-63231.bubbleapps.io/api/1.1/wf/"
 
@@ -33,22 +37,21 @@ data class LogsResponse(
 )
 
 data class LogList(
-    @SerializedName("Logs") val logs: List<LogEntry>
+    @Json(name = "Logs") val logs: List<LogEntry>
 )
 
+@JsonClass(generateAdapter = true)
 data class LogEntry(
-    @SerializedName("User_id") val userId: String,
-    @SerializedName("Date") val date: String,
-    @SerializedName("time-in") val timeIn: Long,
-    @SerializedName("time-out") val timeOut: Long
+    @Json(name = "User_id") val userId: String,
+    @Json(name = "Date") val date: String,
+    @Json(name = "time-in") val timeIn: Long,
+    @Json(name = "time-out") val timeOut: Long
 )
-
 
 // API Interface
 interface ApiService {
     @GET("logs")
     suspend fun getAttendanceLogs(): LogsResponse
-
 
     @POST("login")
     fun loginUser(
