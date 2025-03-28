@@ -722,7 +722,11 @@ fun ProfileAnalyticsScreen(navController: NavController, attendanceViewModel: At
                                 .verticalScroll(rememberScrollState())
                                 .weight(1f)
                         ) {
-                            attendanceList.forEach { (date, timeIn, timeOut) ->
+                            attendanceList
+                                .takeLast(5)
+                                .reversed()
+                                .forEach { (date, timeIn, timeOut) ->
+
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -819,35 +823,7 @@ fun getCurrentDay(): String {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun ProfileAnalyticsScreenPreview() {
-    JairosoftTimesheetTheme {
-        val navController = rememberNavController()
 
-        val fakeAttendanceViewModel = object : AttendanceViewModel(
-            repository = null!! // force-cast only for preview; not used
-        ) {
-            override val attendanceList = MutableStateFlow(
-                listOf(
-                    Attendance("HQ", "03/27/2025", "09:00 AM", "05:00 PM")
-                )
-            )
-            override val isClockedIn = MutableStateFlow(true)
-        }
-
-        val fakeProfileViewModel = object : ProfileViewModel() {
-            override val trackedHours = MutableStateFlow(mapOf("Monday" to 4f))
-            override val runningTime = MutableStateFlow(0L)
-        }
-
-        ProfileAnalyticsScreen(
-            navController = navController,
-            attendanceViewModel = fakeAttendanceViewModel,
-            profileViewModel = fakeProfileViewModel
-        )
-    }
-}
 
 
 

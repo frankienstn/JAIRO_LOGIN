@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.jairosofttimesheet.R
-import com.example.jairosofttimesheet.data.model.Attendance
+import com.example.jairosofttimesheet.data.remote.LogEntry
 import com.example.jairosofttimesheet.ui.theme.gradientDBlue
 import com.example.jairosofttimesheet.viewmodel.AttendanceViewModel
 import kotlinx.coroutines.launch
@@ -43,25 +43,13 @@ import java.util.*
 @Composable
 fun AttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-    val attendanceList by viewModel.attendanceList.collectAsState()
-    val isClockedIn by viewModel.isClockedIn.collectAsState()
+    val attendanceLogs by viewModel.attendanceLogs.collectAsState()
 
     val afacad = FontFamily(Font(R.font.afacad, FontWeight.Normal))
     val poppins = FontFamily(Font(R.font.poppinsregular, FontWeight.Normal))
 
     LaunchedEffect(Unit) {
         viewModel.fetchAttendanceFromApi()
-    }
-
-    LaunchedEffect(isClockedIn) {
-        if (isClockedIn) {
-            val date = SimpleDateFormat("MM/dd/yyyy", Locale.getDefault()).format(Date())
-            val timeIn = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date())
-            viewModel.addAttendance("Davao City", date, timeIn)
-        } else {
-            viewModel.updateTimeOut()
-        }
     }
 
     Box(modifier = Modifier.fillMaxSize().background(gradientDBlue)) {
@@ -89,7 +77,7 @@ fun AttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
                 modifier = Modifier
                     .size(24.dp)
                     .clickable {
-                        saveAttendanceToDownloads(attendanceList, context)
+                        saveAttendanceToDownloads(attendanceLogs, context)
                     }
             )
         }
@@ -102,7 +90,7 @@ fun AttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Location", fontFamily = poppins, fontSize = 11.sp, color = Color.White, modifier = Modifier.weight(1f))
+                Text("User ID", fontFamily = poppins, fontSize = 11.sp, color = Color.White, modifier = Modifier.weight(1f))
 
                 Row(
                     modifier = Modifier.clickable { showDatePicker = true }.weight(1f),
@@ -129,28 +117,19 @@ fun AttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()).weight(1f)
             ) {
-                attendanceList.forEach { item ->
+                attendanceLogs.forEach { log ->
+                    val formattedTimeIn = formatUnixTime(log.timeIn)
+                    val formattedTimeOut = if (log.timeOut != 0L) formatUnixTime(log.timeOut) else "--"
+
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp).height(IntrinsicSize.Min),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(item.location.take(10) + if (item.location.length > 10) "..." else "", fontFamily = afacad, color = Color.White, modifier = Modifier.weight(1f).padding(end = 5.dp), fontSize = 11.sp)
-                        Text(item.date, fontFamily = afacad, color = Color.White, modifier = Modifier.weight(1f).padding(end = 5.dp), fontSize = 11.sp)
-                        Text(item.timeIn, fontFamily = afacad, color = Color.White, modifier = Modifier.weight(1f).padding(end = 5.dp), fontSize = 11.sp)
-                        Text(
-                            if (item.timeOut == "--") " -- " else item.timeOut,
-                            fontFamily = afacad,
-                            color = Color.White,
-                            modifier = Modifier.weight(1f).padding(start = 5.dp, end = 6.dp).run {
-                                if (item.timeOut == "--") {
-                                    this.then(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp))
-                                } else {
-                                    this
-                                }
-                            },
-                            fontSize = 11.sp
-                        )
+                        Text(log.userId.take(10) + if (log.userId.length > 10) "..." else "", fontFamily = afacad, color = Color.White, modifier = Modifier.weight(1f).padding(end = 5.dp), fontSize = 11.sp)
+                        Text(log.date, fontFamily = afacad, color = Color.White, modifier = Modifier.weight(1f).padding(end = 5.dp), fontSize = 11.sp)
+                        Text(formattedTimeIn, fontFamily = afacad, color = Color.White, modifier = Modifier.weight(1f).padding(end = 5.dp), fontSize = 11.sp)
+                        Text(formattedTimeOut, fontFamily = afacad, color = Color.White, modifier = Modifier.weight(1f).padding(start = 5.dp, end = 6.dp), fontSize = 11.sp)
                     }
                 }
             }
@@ -158,15 +137,27 @@ fun AttendanceScreen(viewModel: AttendanceViewModel = viewModel()) {
     }
 }
 
+fun formatUnixTime(timestamp: Long): String {
+    return try {
+        val date = Date(timestamp)
+        val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
+        sdf.format(date)
+    } catch (e: Exception) {
+        "--"
+    }
+}
+
 @RequiresApi(Build.VERSION_CODES.Q)
-fun saveAttendanceToDownloads(attendanceList: List<Attendance>, context: Context) {
+fun saveAttendanceToDownloads(logs: List<LogEntry>, context: Context) {
     val fileName = "Attendance_${System.currentTimeMillis()}.txt"
     val fileContents = buildString {
         append("Attendance Record\n\n")
-        append("Date\t\tTime In\t\tTime Out\n")
-        append("=================================\n")
-        attendanceList.forEach {
-            append("${it.date}\t${it.timeIn}\t${it.timeOut}\n")
+        append("User ID\t\tDate\t\tTime In\t\tTime Out\n")
+        append("===========================================\n")
+        logs.forEach {
+            val timeIn = if (it.timeIn == 0L) "--" else SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date(it.timeIn))
+            val timeOut = if (it.timeOut == 0L) "--" else SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date(it.timeOut))
+            append("${it.userId}\t${it.date}\t$timeIn\t$timeOut\n")
         }
     }
 

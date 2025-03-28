@@ -2,61 +2,59 @@ package com.example.jairosofttimesheet.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.jairosofttimesheet.data.model.Attendance
-import com.example.jairosofttimesheet.data.repository.Repository
+import com.example.jairosofttimesheet.data.remote.ApiService
+import com.example.jairosofttimesheet.data.remote.LogEntry
+import com.example.jairosofttimesheet.data.remote.retrofit
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
-open class AttendanceViewModel(private val repository: Repository) : ViewModel() {
+class AttendanceViewModel : ViewModel() {
 
-    private val _attendanceList = MutableStateFlow<List<Attendance>>(emptyList())
-    open val attendanceList: StateFlow<List<Attendance>> = _attendanceList
+    private val apiService = retrofit.create(ApiService::class.java)
+
+    private val _attendanceLogs = MutableStateFlow<List<LogEntry>>(emptyList())
+    val attendanceLogs: StateFlow<List<LogEntry>> = _attendanceLogs
 
     private val _isClockedIn = MutableStateFlow(false)
-    open val isClockedIn: StateFlow<Boolean> = _isClockedIn
+    val isClockedIn: StateFlow<Boolean> = _isClockedIn
 
-    init {
-        fetchAttendance()
-    }
-
-    private fun fetchAttendance() {
+    fun fetchAttendanceFromApi() {
         viewModelScope.launch {
             try {
-                val data = repository.getAttendance()
-                _attendanceList.value = data
+                val response = apiService.getAttendanceLogs()
+                _attendanceLogs.value = response.response.logs
             } catch (e: Exception) {
-                e.printStackTrace() // You can hook this to error state
+                e.printStackTrace()
             }
         }
     }
 
-    fun fetchAttendanceFromApi() {
-        viewModelScope.launch {
-            val logs = repository.getAttendance() // Or getAttendance()
-            _attendanceList.value = logs
-
-        }
-    }
-
-
     fun addAttendance(location: String, date: String, timeIn: String) {
-        val newAttendance = Attendance(location, date, timeIn, "--")
-        val updatedList = _attendanceList.value + newAttendance
-        _attendanceList.value = updatedList
-        _isClockedIn.value = true
+        // This is a placeholder for future implementation
     }
 
     fun updateTimeOut() {
-        val updatedList = _attendanceList.value.toMutableList()
-        if (updatedList.isNotEmpty() && updatedList.last().timeOut == "--") {
-            updatedList[updatedList.lastIndex] = updatedList.last().copy(timeOut = "05:00 PM")
-            _attendanceList.value = updatedList
-            _isClockedIn.value = false
-        }
+        _isClockedIn.value = false
     }
 
-    fun toggleClockIn() {
-        _isClockedIn.value = !_isClockedIn.value
+    fun clockIn() {
+        _isClockedIn.value = true
+    }
+
+    fun clockOut() {
+        _isClockedIn.value = false
+    }
+
+    fun formatTimestamp(timestamp: Long): String {
+        return try {
+            val date = Date(timestamp)
+            SimpleDateFormat("hh:mm a", Locale.getDefault()).format(date)
+        } catch (e: Exception) {
+            "--"
+        }
     }
 }
